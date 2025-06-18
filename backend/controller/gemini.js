@@ -15,7 +15,7 @@ export const gemini = async (req, res) => {
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
   const __filename = fileURLToPath(import.meta.url);
-  console.log("file name:-",__filename)
+  console.log("file name:-", __filename);
   const __dirname = path.dirname(__filename);
 
   console.log("__dirname:", __dirname);
@@ -25,7 +25,6 @@ export const gemini = async (req, res) => {
   const files = fs.readdirSync(folderPath);
   console.log(files);
 
- 
   let allDocs = [];
 
   for (const file of files) {
@@ -36,16 +35,17 @@ export const gemini = async (req, res) => {
     allDocs.push(...docs);
   }
 
-//   console.log(allDocs)
-  const contextText = allDocs.map(doc => doc.pageContent).join("\n\n");
-  // 2. Split all into chunks
+  //   console.log(allDocs)
+  const contextText = allDocs.map((doc) => doc.pageContent).join("\n\n");
 
-//   const splitter = new RecursiveCharacterTextSplitter({
-//     chunkSize: 2000,
-//     chunkOverlap: 20,
-//   });
-//   const splitDocs = await splitter.splitDocuments(allDocs);
-    // console.log(splitDocs)
+  // Split all into chunks
+
+  //   const splitter = new RecursiveCharacterTextSplitter({
+  //     chunkSize: 2000,
+  //     chunkOverlap: 20,
+  //   });
+  //   const splitDocs = await splitter.splitDocuments(allDocs);
+  // console.log(splitDocs)
   //   console.log("Doc Split:-",splitDocs);
 
   //   const vectorStore = await Chroma.fromDocuments(
@@ -59,13 +59,20 @@ export const gemini = async (req, res) => {
   //     }
   //   );
 
-//   const relevantChunks = splitDocs.filter((chunk) =>
-//     chunk.pageContent.toLowerCase().includes("Committee")
-//   );
+  //   const relevantChunks = splitDocs.filter((chunk) =>
+  //     chunk.pageContent.toLowerCase().includes("Committee")
+  //   );
 
   // console.log("chunk:-",relevantChunks[0].pageContent)
-  let userquestion = "Article (243 (H))?";
-  let prompt = `use this context ${contextText} to answar the user question ${userquestion}`;
+  let userquestion = req.body.user_question;
+const prompt = `You are an AI assistant. Answer the following question based on the provided context.
+Context: ${contextText} Question: ${userquestion}
+Instructions:
+- First, search for the answer strictly within the context.
+- If not found, use your own knowledge and add [Model Knowledge] before your response.
+- If the answer is not found in the context, DO NOT hesitate to use your own general knowledge..
+- If you must rely on your own understanding, do so clearly and confidently..
+`;
 
   const result = await model.generateContent(prompt);
   const response = await result.response;
